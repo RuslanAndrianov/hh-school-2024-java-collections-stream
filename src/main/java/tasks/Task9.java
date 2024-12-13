@@ -1,14 +1,8 @@
 package tasks;
 
 import common.Person;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -21,69 +15,66 @@ P.P.S Здесь ваши правки необходимо прокоммент
  */
 public class Task9 {
 
-  private long count;
-
   // Костыль, эластик всегда выдает в топе "фальшивую персону".
   // Конвертируем начиная со второй
   public List<String> getNames(List<Person> persons) {
-    if (persons.size() == 0) {
+    // Сама IDEA подсказывает заменить == 0 на .isEmpty()
+    if (persons.isEmpty()) {
       return Collections.emptyList();
     }
-    persons.remove(0);
-    return persons.stream().map(Person::firstName).collect(Collectors.toList());
+    // Операция удаления первого элемента какая-то отдельная, включим ее в пайплайн в стриме
+    // + не мутируем список persons
+    return persons.stream()
+        .skip(1)
+        .map(Person::firstName)
+        .collect(Collectors.toList());
   }
 
   // Зачем-то нужны различные имена этих же персон (без учета фальшивой разумеется)
   public Set<String> getDifferentNames(List<Person> persons) {
-    return getNames(persons).stream().distinct().collect(Collectors.toSet());
+    // Здесь можно обойтись без Stream API и просто в конструктор передать коллекцию
+    return new HashSet<>(getNames(persons));
   }
 
   // Тут фронтовая логика, делаем за них работу - склеиваем ФИО
   public String convertPersonToString(Person person) {
-    String result = "";
-    if (person.secondName() != null) {
-      result += person.secondName();
-    }
-
-    if (person.firstName() != null) {
-      result += " " + person.firstName();
-    }
-
-    if (person.secondName() != null) {
-      result += " " + person.secondName();
-    }
-    return result;
+    // Для конкатенации лучше использовать StringBuilder, чтобы не загромождать String pool
+    StringBuilder result = new StringBuilder();
+    // Сократим код для обработки null-кейсов с использованием Optional
+    Optional.ofNullable(person.secondName()).ifPresent(result::append);
+    Optional.ofNullable(person.firstName()).ifPresent(firstName -> result.append(" ").append(firstName));
+    // По логике должно быть middleName - отчество, а не secondName - фамилия (в исходном коде было secondName)
+    Optional.ofNullable(person.middleName()).ifPresent(middleName -> result.append(" ").append(middleName));
+    return result.toString();
   }
 
   // словарь id персоны -> ее имя
   public Map<Integer, String> getPersonNames(Collection<Person> persons) {
-    Map<Integer, String> map = new HashMap<>(1);
-    for (Person person : persons) {
-      if (!map.containsKey(person.id())) {
-        map.put(person.id(), convertPersonToString(person));
-      }
-    }
-    return map;
+    // Переписали на Stream API для наглядности
+    return persons.stream()
+      .collect(Collectors.toMap(
+          Person::id,
+          this::convertPersonToString,
+          (existing, replacement) -> existing
+        )
+      );
   }
 
   // есть ли совпадающие в двух коллекциях персоны?
   public boolean hasSamePersons(Collection<Person> persons1, Collection<Person> persons2) {
-    boolean has = false;
-    for (Person person1 : persons1) {
-      for (Person person2 : persons2) {
-        if (person1.equals(person2)) {
-          has = true;
-        }
-      }
-    }
-    return has;
+    // Пусть n и m - размер коллекций 1 и 2
+    // Проблема старого кода во вложенности - асимптотика поиска всегда O(nm)
+    // Асимптотика нового кода зависит от сложности операции contains, но даже в худшем случае будет O(nm)
+    return !persons2.stream()
+        .filter(persons1::contains)
+        .toList()
+        .isEmpty();
   }
 
   // Посчитать число четных чисел
   public long countEven(Stream<Integer> numbers) {
-    count = 0;
-    numbers.filter(num -> num % 2 == 0).forEach(num -> count++);
-    return count;
+    // Сократили ненужный код
+    return numbers.filter(num -> num % 2 == 0).count();
   }
 
   // Загадка - объясните почему assert тут всегда верен
@@ -95,4 +86,7 @@ public class Task9 {
     Set<Integer> set = new HashSet<>(integers);
     assert snapshot.toString().equals(set.toString());
   }
+  // Насколько я понял, это связано с тем, что при вызове toString() для HashSet
+  // элементы будут возвращены в порядке, определенном хэш-кодами элементов
+  // Но хэш-коды Integer - это само значение числа, поэтому и принтуется в отсортированном порядке
 }
