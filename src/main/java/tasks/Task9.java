@@ -15,13 +15,20 @@ P.P.S Здесь ваши правки необходимо прокоммент
  */
 public class Task9 {
 
+  public static void main(String[] args) {
+    Task9 task9 = new Task9();
+    System.out.println(
+      task9.getNames(List.of(
+//        new Person(1, "Oleg", null, null, Instant.now()),
+//        new Person(2, "Vasya", null, null, Instant.now())
+      ))
+    );
+  }
+
+
   // Костыль, эластик всегда выдает в топе "фальшивую персону".
   // Конвертируем начиная со второй
   public List<String> getNames(List<Person> persons) {
-    // Сама IDEA подсказывает заменить == 0 на .isEmpty()
-    if (persons.isEmpty()) {
-      return Collections.emptyList();
-    }
     // Операция удаления первого элемента какая-то отдельная, включим ее в пайплайн в стриме
     // + не мутируем список persons
     return persons.stream()
@@ -40,11 +47,17 @@ public class Task9 {
   public String convertPersonToString(Person person) {
     // Для конкатенации лучше использовать StringBuilder, чтобы не загромождать String pool
     StringBuilder result = new StringBuilder();
-    // Сократим код для обработки null-кейсов с использованием Optional
-    Optional.ofNullable(person.secondName()).ifPresent(result::append);
-    Optional.ofNullable(person.firstName()).ifPresent(firstName -> result.append(" ").append(firstName));
-    // По логике должно быть middleName - отчество, а не secondName - фамилия (в исходном коде было secondName)
-    Optional.ofNullable(person.middleName()).ifPresent(middleName -> result.append(" ").append(middleName));
+    if (person.secondName() != null) {
+      result.append(person.secondName());
+    }
+
+    if (person.firstName() != null) {
+      result.append(" ").append(person.firstName());
+    }
+
+    if (person.middleName() != null) {
+      result.append(" ").append(person.middleName());
+    }
     return result.toString();
   }
 
@@ -64,11 +77,9 @@ public class Task9 {
   public boolean hasSamePersons(Collection<Person> persons1, Collection<Person> persons2) {
     // Пусть n и m - размер коллекций 1 и 2
     // Проблема старого кода во вложенности - асимптотика поиска всегда O(nm)
-    // Асимптотика нового кода зависит от сложности операции contains, но даже в худшем случае будет O(nm)
-    return !persons2.stream()
-        .filter(persons1::contains)
-        .toList()
-        .isEmpty();
+    // Асимптотика нового кода - O(n + m)
+    return persons2.stream()
+        .anyMatch(new HashSet<>(persons1)::contains);
   }
 
   // Посчитать число четных чисел
