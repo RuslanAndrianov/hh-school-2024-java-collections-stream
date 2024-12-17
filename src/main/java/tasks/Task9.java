@@ -15,17 +15,6 @@ P.P.S Здесь ваши правки необходимо прокоммент
  */
 public class Task9 {
 
-  public static void main(String[] args) {
-    Task9 task9 = new Task9();
-    System.out.println(
-      task9.getNames(List.of(
-//        new Person(1, "Oleg", null, null, Instant.now()),
-//        new Person(2, "Vasya", null, null, Instant.now())
-      ))
-    );
-  }
-
-
   // Костыль, эластик всегда выдает в топе "фальшивую персону".
   // Конвертируем начиная со второй
   public List<String> getNames(List<Person> persons) {
