@@ -3,12 +3,8 @@ package tasks;
 import common.Area;
 import common.Person;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /*
 Имеются
@@ -23,22 +19,20 @@ public class Task6 {
                                                   Map<Integer, Set<Integer>> personAreaIds,
                                                   Collection<Area> areas) {
     // Доп. память O(m), где m - кол-во регионов
-    Map<Integer, String> areaMap = areas.stream()
-        .collect(Collectors.toMap(Area::getId, Area::getName));
+    Map<Integer, Area> areaMap = areas.stream()
+        .collect(Collectors.toMap(Area::getId, area -> area, (existing, replacement) -> existing));
 
     // Теперь сложность кода O(n + m), т.к. мы не бегаем для каждого person каждый раз в areas
     // Вместо этого можем за О(1) искать в areaMap название региона по его id
     return persons.stream()
-      .flatMap(person -> {
-        Set<Integer> areaIds = personAreaIds.get(person.id());
-        if (areaIds == null) {
-          return Stream.empty();
-        }
-        return areaIds.stream()
+      .flatMap(person -> personAreaIds.getOrDefault(person.id(), Collections.emptySet()).stream()
             .map(areaMap::get)
             .filter(Objects::nonNull)
-            .map(areaName -> String.format("%s - %s", person.firstName(), areaName));
-      })
+            .map(area -> formatOutput(person, area)))
       .collect(Collectors.toSet());
+  }
+
+  private static String formatOutput(Person person, Area area) {
+    return String.format("%s - %s", person.firstName(), area.getName());
   }
 }

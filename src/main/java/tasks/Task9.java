@@ -34,20 +34,10 @@ public class Task9 {
 
   // Тут фронтовая логика, делаем за них работу - склеиваем ФИО
   public String convertPersonToString(Person person) {
-    // Для конкатенации лучше использовать StringBuilder, чтобы не загромождать String pool
-    StringBuilder result = new StringBuilder();
-    if (person.secondName() != null) {
-      result.append(person.secondName());
-    }
-
-    if (person.firstName() != null) {
-      result.append(" ").append(person.firstName());
-    }
-
-    if (person.middleName() != null) {
-      result.append(" ").append(person.middleName());
-    }
-    return result.toString();
+    return Stream.of(person.secondName(), person.firstName(), person.middleName())
+        .filter(Objects::nonNull)
+        .reduce((a, b) -> a + " " + b)
+        .orElse("");
   }
 
   // словарь id персоны -> ее имя
